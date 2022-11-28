@@ -1,9 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <float.h>
 #include <math.h>
 
-typedef struct user //Why this?
+typedef struct user
 {
     char name[25];
     double time;
@@ -13,52 +14,58 @@ typedef struct user //Why this?
     double distance;
 } user_t;
 
-user_t other_users[20];
-
-int numUsers(char filename[], user_t *users)
+int readUsersFile(char filename[], user_t *other_users)
 {
-    int num = 0; //How does this 0
+    int num = 0; 
 
     FILE * readFile = fopen(filename, "r");
     if(readFile)
     {
-        // read in number of records
+        // Get number of users from first line
         fscanf(readFile, "%d", &num);
 
+        // Itterate through text file to create array of structs
         for(int i = 0; i < num; i++)
         {
-           fscanf(readFile, "%s", users[i].name);
-           //   printf("Reading user - %s\n", users[i].name);
-           fscanf(readFile, "%lf", &users[i].time);
-           fscanf(readFile, "%lf", &users[i].latitude); 
-           fscanf(readFile, "%lf", &users[i].longitude); 
-           fscanf(readFile, "%lf", &users[i].altitude);
+           fscanf(readFile, "%s", other_users[i].name);
+           //printf("Reading user - %s\n", users[i].name);
+           fscanf(readFile, "%lf", &other_users[i].time);
+           fscanf(readFile, "%lf", &other_users[i].latitude); 
+           fscanf(readFile, "%lf", &other_users[i].longitude); 
+           fscanf(readFile, "%lf", &other_users[i].altitude);
         }
     }
     fclose(readFile);
-    return num; //Change to number of users
+    return num; 
 }
 
-void printUsersToFile(char filename[], user_t *users, int num)
+void printUsersToFile(char filename[], user_t other_users[], int num, user_t ourUser)
 {
     FILE * userfile = fopen(filename, "w");
     if(userfile)
     {
-        fprintf(userfile, "%d\n", num);
+        // Print new number of users
+        fprintf(userfile, "%d\n", (num+1));
+        // Itterate through array of structs to write values to text file
         for(int i = 0; i < num; i++)
         {
-            fprintf(userfile, "%s\n", users[i].name);
-            fprintf(userfile, "%.0lf\n", users[i].time);
-            fprintf(userfile, "%.2lf\n", users[i].latitude); 
-            fprintf(userfile, "%.2lf\n", users[i].longitude); 
-            fprintf(userfile, "%.2lf\n", users[i].altitude);         
-            fprintf(userfile, "%.2lf", users[i].distance);         
+            fprintf(userfile, "%s\n", other_users[i].name);
+            fprintf(userfile, "%.0lf\n", other_users[i].time);
+            fprintf(userfile, "%.2lf\n", other_users[i].latitude);
+            fprintf(userfile, "%.2lf\n", other_users[i].longitude);
+            fprintf(userfile, "%.2lf\n", other_users[i].altitude);
         }
+        // Write user struct to text file
+        fprintf(userfile, "%s\n", ourUser.name);
+        fprintf(userfile, "%.0lf\n", ourUser.time);
+        fprintf(userfile, "%.2lf\n", ourUser.latitude);
+        fprintf(userfile, "%.2lf\n", ourUser.longitude);
+        fprintf(userfile, "%.2lf\n", ourUser.altitude);
     }
     fclose(userfile);
 }
 
-void addUser(user_t *users, int *n)
+void addUser(user_t *new_user)
 {
     char name[25];
     double time;
@@ -66,6 +73,7 @@ void addUser(user_t *users, int *n)
     double longitude;
     double altitude;
 
+    // Gets info from user
     printf("Enter your name: ");
     scanf(" %s", &name);
     printf("Enter your time: ");
@@ -77,47 +85,46 @@ void addUser(user_t *users, int *n)
     printf("Enter your altitude: ");
     scanf(" %lf", &altitude);
 
-    strcpy(users[*n].name, name);
-    users[*n].time = time;
-    users[*n].latitude = latitude;
-    users[*n].longitude = longitude;
-    users[*n].altitude = altitude;
-    *n = *n + 1;
+    // Create struct out of user info
+    strcpy((*new_user).name, name);
+    (*new_user).time = time;
+    (*new_user).latitude = latitude;
+    (*new_user).longitude = longitude;
+    (*new_user).altitude = altitude;
 }
 
-int distance(user_t *users, int num, int ourUser)
+void distance(user_t users[], int num, user_t ourUser)
 {
-    double lowestDistance = DBL_MAX;
-    int closestUser = -1;
+    double lowestDistance = DBL_MAX; // Largest double
+    int closestUser = -1; // Not an index in the array
+    printf("Distance from %s to ...\n", ourUser.name);
     for(int i = 0; i < num; i++)
-    {
-        if(i != ourUser)
+    { 
+        double new_distance = sqrt(pow((users[i].latitude - ourUser.latitude),2) + 
+            pow((users[i].longitude - ourUser.longitude),2) + 
+            pow((users[i].altitude - ourUser.altitude),2)); //Calc distance with formula
+        printf("\t %s is %.2lfm\n", users[i].name, new_distance);
+        if( new_distance < lowestDistance )
         {
-            users[i].distance = sqrt(pow((users[i].latitude - users[ourUser].latitude),2) + pow((users[i].longitude - users[ourUser].longitude),2) + pow((users[i].altitude - users[ourUser].altitude),2)); //Calc distance
-            if( users[i].distance <= lowestDistance )
-            {
-                lowestDistance = users[i].distance;
-                closestUser = i;
-            }
+            lowestDistance = new_distance;
+            closestUser = i;
         }
     }
-    return closestUser;
+    printf("\n*** The closest user to %s is %s ***\n\n", ourUser.name, users[closestUser].name);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     int num = 0;
-    int closestUser = -1;
-    int thisUser = -1;
+    user_t other_users[20]; // other_users = (user_t *)malloc(sizeof(user_t) * 20);
+    user_t our_user;
 
-    num = numUsers("users.txt", other_users);
-    addUser(other_users, &num);
+    // num = readUsersFile(argv[1], other_users);
+    num = readUsersFile("users.txt", other_users);
+    addUser(&our_user);
 
-    thisUser = num - 1;
-    closestUser = distance(other_users, num, thisUser);
+    distance(other_users, num, our_user);
 
-    printf("The closest person to %s is %s\n", other_users[thisUser].name, other_users[closestUser].name);
-    printf("They are %.02lfm apart\n", other_users[closestUser].distance);
-
-    printUsersToFile("newUsers.txt", other_users, num);
+    // printUsersToFile(argv[2], other_users, num, our_user);
+    printUsersToFile("newUsers.txt", other_users, num, our_user);
 }
