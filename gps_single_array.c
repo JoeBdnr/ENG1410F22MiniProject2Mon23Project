@@ -3,7 +3,7 @@
 #include <float.h>
 #include <math.h>
 
-typedef struct user //Why this?
+typedef struct user
 {
     char name[25];
     double time;
@@ -77,17 +77,6 @@ void addUser(user_t *users, int *n)
     printf("Enter your altitude: ");
     scanf(" %lf", &altitude);
 
-    // Need to make our_user structure, can use malloc
-    /*
-        struct user_t our_user;
-        strcpy(our_user.name, name);
-        our_user.time = time;
-        our_user.latitude = latitude;
-        our_user.longitude = longitude;
-        our_user.altitude = altitude;
-
-        users[*n] = our_user; 
-    */
     strcpy(users[*n].name, name);
     users[*n].time = time;
     users[*n].latitude = latitude;
