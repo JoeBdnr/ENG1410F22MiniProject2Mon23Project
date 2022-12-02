@@ -1,1 +1,1 @@
-# ENG1410F22MiniProject2Mon23Project
+This program uses a text file with information such as names, times, and distance information to populate an array of structs. It will then ask for user input and create a struct based on that. The program will then compare the distances of each of the user structs in the array to the user struct inputted by the user using a formula provided and print the closest user. The program will then add the new user to the text file.
